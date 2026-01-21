@@ -1,18 +1,20 @@
-const moongose = require('mongoose');
+const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const UserSchema = new moongose.Schema({
+
+const UserSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        trim: ture
+        trim: true
     },
     email: {
         type: String,
         required: true,
+        unique: true,
         lowercase: true,
         match: [/^\S+@\S+\.\S+$/]
     },
-    passwowrd: {
+    password: {
         type: String,
         required: [true, 'Password is required'],
         minlength: 6,
@@ -20,25 +22,32 @@ const UserSchema = new moongose.Schema({
     },
     role: {
         type: String,
-        enm: ['user', 'admin'],
+        enum: ['user', 'admin'],
         default: 'user'
+    },
+    studentProfile: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'StudentProfile'
     }
 }, {
     timestamps: true,
-})
-//pre-saved middleware
-userSchema.pre('save', async function (next) {
-    if (!this.isModified('passwowrd')) return next();
+});
+
+// pre-save middleware
+UserSchema.pre('save', async function (next) {
+    if (!this.isModified('password')) return next();
     try {
         const salt = await bcrypt.genSalt(10);
-        this.passwowrd = await bcrypt.hash(this.passwowrd, salt);
+        this.password = await bcrypt.hash(this.password, salt);
         next();
     } catch (error) {
         next(error);
     }
 });
-//instance method:campare password
-userSchema.methods.comparepassword = async function (candidatepassword) {
-    return await bcrypt.compare(candidatepassword, this.passwowrd);
+
+// instance method: compare password
+UserSchema.methods.comparepassword = async function (candidatepassword) {
+    return await bcrypt.compare(candidatepassword, this.password);
 };
-module.exports = moongose.model('User',UserSchema);
+
+module.exports = mongoose.model('User', UserSchema);

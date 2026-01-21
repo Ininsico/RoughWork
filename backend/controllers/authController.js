@@ -5,7 +5,7 @@ const generatetoken = (id) => {
     return jwt.sign({ id }, process.env.JWT_SECRET, {
         expiresIn: '30d'
     });
-}
+};
 
 //@docs register user
 //@route POST api/auth/register
@@ -15,12 +15,10 @@ const registerUser = async (req, res, next) => {
         const { name, email, password } = req.body;
         const userexsit = await User.findOne({ email });
         if (userexsit) {
-            return res.status(400).json(
-                {
-                    success: false,
-                    message: 'User already exsists'
-                }
-            );
+            return res.status(400).json({
+                success: false,
+                message: 'User already exists'
+            });
         }
         const user = await User.create({
             name, email, password
@@ -40,7 +38,7 @@ const registerUser = async (req, res, next) => {
     } catch (error) {
         next(error);
     }
-}
+};
 
 //@docs Login user
 //@route POST /api/user/login
@@ -52,11 +50,11 @@ const loginUser = async (req, res, next) => {
         if (!user) {
             return res.status(401).json({
                 success: false,
-                message: 'The user is not registered,Login first'
+                message: 'The user is not registered, Login first'
             });
         }
-        //check password
-        const ismatch = await User.comparepassword(password);
+        // check password using instance method
+        const ismatch = await user.comparepassword(password);
         if (!ismatch) {
             return res.status(401).json({
                 success: false,
@@ -68,22 +66,20 @@ const loginUser = async (req, res, next) => {
             success: true,
             token,
             user: {
-                token,
                 name: user.name,
-                id: user.id,
-                email: user.username,
+                id: user._id,
+                email: user.email,
                 role: user.role
             }
         });
     } catch (err) {
         next(err);
     }
-}
+};
 
 //@desc Get current user
 //@route GET api/user/me
 //@access private
-
 const getMe = async (req, res, next) => {
     try {
         const user = await User.findById(req.user.id);
@@ -94,9 +90,10 @@ const getMe = async (req, res, next) => {
     } catch (err) {
         next(err);
     }
-}
-module.exports={
+};
+
+module.exports = {
     registerUser,
     loginUser,
     getMe
-}
+};
